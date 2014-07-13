@@ -1,7 +1,6 @@
 $(document).ready(function(){
   $("form").delegate(".component", "mousedown", function(md){
     $(".popover").remove();
-
     md.preventDefault();
     var tops = [];
     var mouseX = md.pageX;
@@ -12,69 +11,67 @@ $(document).ready(function(){
     var delays = {
       main: 0,
       form: 120
-    }
-    var type;
+      }
+      var type;
 
-    if($this.parent().parent().parent().parent().attr("id") === "components"){
-      type = "main";
-    } else {
-      type = "form";
-    }
-
-    var delayed = setTimeout(function(){
-      if(type === "main"){
-        $temp = $("<form class='form-horizontal col-md-6' id='temp'></form>").append($this.clone());
+      if($this.parent().parent().parent().parent().attr("id") === "components"){
+        type = "main";
       } else {
-        if($this.attr("id") !== "legend"){
-          $temp = $("<form class='form-horizontal col-md-6' id='temp'></form>").append($this);
-        }
+        type = "form";
       }
 
-      $("body").append($temp);
+      var delayed = setTimeout(function(){
+        if(type === "main"){
+          $temp = $("<form class='form-horizontal col-md-6' id='temp'></form>").append($this.clone());
+        } else {
+          $temp = $("<form class='form-horizontal col-md-6' id='temp'></form>").append($this);
+        }
 
-      $temp.css({"position" : "absolute",
-                 "top"      : mouseY - ($temp.height()/2) + "px",
-                 "left"     : mouseX - ($temp.width()/2) + "px",
-                 "opacity"  : "0.9"}).show()
+        $("body").append($temp);
 
-      var half_box_height = ($temp.height()/2);
-      var half_box_width = ($temp.width()/2);
-      var $target = $("#target");
-      var tar_pos = $target.position();
-      var $target_component = $("#target .component");
+        $temp.css({"position" : "absolute",
+          "top"      : mouseY - ($temp.height()/2) + "px",
+          "left"     : mouseX - ($temp.width()/2) + "px",
+          "opacity"  : "0.9"}).show();
 
-      $(document).delegate("body", "mousemove", function(mm){
+        var half_box_height = ($temp.height()/2);
+        var half_box_width = ($temp.width()/2);
 
-        var mm_mouseX = mm.pageX;
-        var mm_mouseY = mm.pageY;
+        var $target = $("#target");
+        var tar_pos = $target.position();
+        var $target_component = $("#target .component");
 
-        $temp.css({"top"      : mm_mouseY - half_box_height + "px",
-          "left"      : mm_mouseX - half_box_width  + "px"});
+        $(document).delegate("body", "mousemove", function(mm){
 
-        if ( mm_mouseX > tar_pos.left &&
-          mm_mouseX < tar_pos.left + $target.width() + $temp.width()/2 &&
-          mm_mouseY > tar_pos.top &&
-          mm_mouseY < tar_pos.top + $target.height() + $temp.height()/2
-          ){
+          var mm_mouseX = mm.pageX;
+          var mm_mouseY = mm.pageY;
+
+          $temp.css({"top": mm_mouseY - half_box_height + "px","left": mm_mouseX - half_box_width  + "px"});
+
+          if ( mm_mouseX > tar_pos.left && mm_mouseX < tar_pos.left + $target.width() + $temp.width()/2 && mm_mouseY > tar_pos.top && mm_mouseY < tar_pos.top + $target.height() + $temp.height()/2){
             $("#target").css("background-color", "#fafdff");
             $target_component.css({"border-top" : "1px solid white", "border-bottom" : "none"});
+            $target_component.removeClass('targettop');
+            $target_component.removeClass('targetbot');
             tops = $.grep($target_component, function(e){
-              return ($(e).position().top -  mm_mouseY + half_box_height > 0 && $(e).attr("id") !== "legend");
+              return ($(e).position().top -  mm_mouseY + half_box_height > 0 );
             });
             if (tops.length > 0){
-              $(tops[0]).css("border-top", "1px solid #22aaff");
+              $(tops[0]).addClass("targettop");
             } else{
               if($target_component.length > 0){
-                $($target_component[$target_component.length - 1]).css("border-bottom", "1px solid #22aaff");
+                $($target_component[$target_component.length - 1]).removeClass('targettop');
+                $($target_component[$target_component.length - 1]).addClass("targetbot");
               }
             }
           } else{
             $("#target").css("background-color", "#fff");
+            $target_component.removeClass("targetbot");
+            $target_component.removeClass("targettop");
             $target_component.css({"border-top" : "1px solid white", "border-bottom" : "none"});
             $target.css("background-color", "#fff");
           }
-      });
-
+        });
       $("body").delegate("#temp", "mouseup", function(mu){
         mu.preventDefault();
 
@@ -83,26 +80,24 @@ $(document).ready(function(){
         var tar_pos = $target.position();
 
         $("#target .component").css({"border-top" : "1px solid white", "border-bottom" : "none"});
+        $("#target .component").removeClass('targettop');
+        $("#target .component").removeClass('targetbot');
 
-        // acting only if mouse is in right place
         if (mu_mouseX + half_box_width > tar_pos.left &&
           mu_mouseX - half_box_width < tar_pos.left + $target.width() &&
           mu_mouseY + half_box_height > tar_pos.top &&
           mu_mouseY - half_box_height < tar_pos.top + $target.height()
           ){
-            $temp.attr("style", null);
-            // where to add
-            if(tops.length > 0){
-              $($temp.html()).insertBefore(tops[0]);
-            } else {
-              $("#target fieldset").append($temp.append("\n\n\ \ \ \ ").html());
-            }
+          $temp.attr("style", null);
+          if(tops.length > 0){
+            $($temp.html()).insertBefore(tops[0]);
           } else {
-            // no add
-            $("#target .component").css({"border-top" : "1px solid white", "border-bottom" : "none"});
-            tops = [];
+            $("#target fieldset").append($temp.append("\n\n\ \ \ \ ").html());
           }
-
+        } else {
+          $("#target .component").css({"border-top" : "1px solid white", "border-bottom" : "none"});
+          tops = [];
+        }
         //clean up & add popover
         $target.css("background-color", "#fff");
         $(document).undelegate("body", "mousemove");
@@ -112,7 +107,6 @@ $(document).ready(function(){
         genSource();
       });
     }, delays[type]);
-
     $(document).mouseup(function () {
       clearInterval(delayed);
       return false;
@@ -122,6 +116,7 @@ $(document).ready(function(){
       return false;
     });
   });
+
 
   var genSource = function(){
     var $temptxt = $("<div>").html($("#build").html());
